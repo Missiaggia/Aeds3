@@ -424,359 +424,6 @@ public class TP01 {
         return ordenados;
     }
 
-    // Intercalaçao balenceada comum
-    public static Filme[] IntercalacaoBalanceada(int bloco, int n, Filme[] imdb) throws Exception {
-        int contBloco = 0;
-        int TAMANHO_BLOCO = bloco * n; // para saber o tamanho dos blocos
-        Filme[] ordenados = new Filme[bloco];
-
-        RandomAccessFile arq1 = new RandomAccessFile("Data/temp/arq1.tmp", "rw"); // Arquivo temporario 1
-        RandomAccessFile arq2 = new RandomAccessFile("Data/temp/arq2.tmp", "rw"); // Arquivo temporario 2
-        boolean switchArq1 = true; // boolean para saber a troca dos arquivos
-
-        // For para fazer a separaçao das informaçoes em blocos menores
-        for (int i = 0; i < imdb.length; i++) {
-            if (imdb[i] != null) {
-                if (contBloco == bloco) {
-                    ordenados = ordenar(ordenados);
-                    if (switchArq1) {
-                        byte[] ba;
-                        int cont = 0;
-                        while (cont < ordenados.length) {
-                            if (ordenados[cont] != null) {
-                                ba = ordenados[cont].toByte();
-                                arq1.writeInt(ba.length);
-                                arq1.write(ba);
-                            }
-                            cont++;
-                        }
-                        for (int a = 0; a < ordenados.length; a++) {
-                            ordenados[a] = null;
-                        }
-                        switchArq1 = false;
-                        i--;
-                        contBloco = 0;
-                    } else {
-                        byte[] ba;
-                        int cont = 0;
-                        while (cont < ordenados.length) {
-                            if (ordenados[cont] != null) {
-                                ba = ordenados[cont].toByte();
-                                arq2.writeInt(ba.length);
-                                arq2.write(ba);
-                            }
-                            cont++;
-                        }
-                        for (int a = 0; a < ordenados.length; a++) {
-                            ordenados[a] = null;
-                        }
-                        switchArq1 = true;
-                        i--;
-                        contBloco = 0;
-                    }
-                } else {
-                    ordenados[contBloco] = imdb[i];
-                    contBloco++;
-                }
-            } else {
-                if (ordenados[0] != null) {
-                    ordenados = ordenar(ordenados);
-                    if (switchArq1) {
-                        byte[] ba;
-                        int cont = 0;
-                        while (cont < ordenados.length) {
-                            if (ordenados[cont] != null) {
-                                ba = ordenados[cont].toByte();
-                                arq1.writeInt(ba.length);
-                                arq1.write(ba);
-                            }
-                            cont++;
-                        }
-                        ordenados[0] = null;
-                    } else {
-                        byte[] ba;
-                        int cont = 0;
-
-                        while (cont < ordenados.length) {
-                            if (ordenados[cont] != null) {
-                                ba = ordenados[cont].toByte();
-                                arq2.writeInt(ba.length);
-                                arq2.write(ba);
-                            }
-                            cont++;
-                        }
-                        ordenados[0] = null;
-                    }
-                }
-            }
-        }
-
-        Filme[] temp1 = lerTemp("Data/temp/arq1.tmp"); // Lendo o arquivo temporario 1
-        Filme[] temp2 = lerTemp("Data/temp/arq2.tmp"); // Lendo o arquivo temporario 2
-
-        RandomAccessFile arq3 = new RandomAccessFile("Data/temp/arq3.tmp", "rw");
-        RandomAccessFile arq4 = new RandomAccessFile("Data/temp/arq4.tmp", "rw");
-        boolean switchArq2 = true;
-
-        int nBloco1 = 0; // Numero de blocos 1
-        int nBloco2 = 0; // Numero de blocos 2
-        int nEtapas = 0; // Numero de etapas
-        int pont1 = 0; // ponteiro 1
-        int pont2 = 0; // ponterio 2
-        Filme[] etapa2 = new Filme[(TAMANHO_BLOCO) * 2];
-
-        // Primeira intercalaçao
-        // Se basei em juntar blocos menores em blocos maiores de forma a se agrupar em
-        // ordem
-        while (temp1[pont1] != null && temp2[pont2] != null) {
-            while (nBloco1 < TAMANHO_BLOCO || nBloco2 < TAMANHO_BLOCO) {
-                // Faz cada uma das verificaçoes para juntar ou trocas os objetos
-                if (temp1[pont1] != null && temp2[pont2] == null && nBloco1 < TAMANHO_BLOCO) {
-                    etapa2[nEtapas] = temp1[pont1];
-                    nBloco1++;
-                    nEtapas++;
-                    pont1++;
-                } else if (temp2[pont2] != null && temp1[pont1] == null && nBloco2 < TAMANHO_BLOCO) {
-                    etapa2[nEtapas] = temp2[pont2];
-                    nBloco2++;
-                    nEtapas++;
-                    pont2++;
-                } else if (temp1[pont1] == null && temp2[pont2] == null) {
-                    nBloco1 = TAMANHO_BLOCO;
-                    nBloco2 = TAMANHO_BLOCO;
-                } else if (nBloco1 < TAMANHO_BLOCO && nBloco2 >= TAMANHO_BLOCO) {
-                    etapa2[nEtapas] = temp1[pont1];
-                    nBloco1++;
-                    nEtapas++;
-                    pont1++;
-                } else if (nBloco2 < TAMANHO_BLOCO && nBloco1 >= TAMANHO_BLOCO) {
-                    etapa2[nEtapas] = temp2[pont2];
-                    nBloco2++;
-                    nEtapas++;
-                    pont2++;
-                } else if (temp1[pont1].getId() < temp2[pont2].getId() && temp1[pont1].getId() != -1) {
-                    etapa2[nEtapas] = temp1[pont1];
-                    nBloco1++;
-                    nEtapas++;
-                    pont1++;
-                } else if (temp2[pont2].getId() < temp1[pont1].getId() && temp2[pont2].getId() != -1) {
-                    etapa2[nEtapas] = temp2[pont2];
-                    nBloco2++;
-                    nEtapas++;
-                    pont2++;
-                }
-            }
-
-            // Faz a ordenaçao da etapa 2 que é a primeira intercaçao
-            etapa2 = ordenar(etapa2);
-
-            // Começa a escrever os registros nos arquivos temporarios 3 e 4
-            for (int i = 0; i < etapa2.length; i++) {
-                if (switchArq2) {
-                    if (etapa2[i] != null) {
-                        byte[] ba;
-                        ba = etapa2[i].toByte();
-                        arq3.writeInt(ba.length);
-                        arq3.write(ba);
-                    }
-                } else {
-                    if (etapa2[i] != null) {
-                        byte[] ba;
-                        ba = etapa2[i].toByte();
-                        arq4.writeInt(ba.length);
-                        arq4.write(ba);
-                    }
-                }
-            }
-
-            switchArq2 = !(switchArq2); // Inverte o boolean
-            nBloco1 = 0; // Numero de blocos 1
-            nBloco2 = 0; // Numero de blocos 2
-            nEtapas = 0; // Numero de etapas
-
-            // Tranforma todos os registros da etapa 2 em nulos
-            for (int i = 0; i < etapa2.length; i++) {
-                etapa2[i] = null;
-            }
-        }
-
-        Filme[] temp3 = lerTemp("Data/temp/arq3.tmp"); // Leitura do Arquivo temporario 3
-        Filme[] temp4 = lerTemp("Data/temp/arq4.tmp"); // Leitura do Arquivo temporario 4
-        // Abertura do arquivo temporario 5 e 6
-        RandomAccessFile arq5 = new RandomAccessFile("Data/temp/arq5.tmp", "rw");
-        RandomAccessFile arq6 = new RandomAccessFile("Data/temp/arq6.tmp", "rw");
-
-        switchArq2 = true; // Controle de troca setado para verdadeiro
-        nBloco1 = 0;
-        nBloco2 = 0;
-        nEtapas = 0;
-        pont1 = 0;
-        pont2 = 0;
-        Filme[] etapa3 = new Filme[(TAMANHO_BLOCO) * 4];
-
-        // Segunda intercalaçao
-        while (temp3[pont1] != null || temp4[pont2] != null) {
-            while (nBloco1 < (TAMANHO_BLOCO) * 2 || nBloco2 < (TAMANHO_BLOCO) * 2) {
-
-                if (temp3[pont1] != null && temp4[pont2] == null && nBloco1 < (TAMANHO_BLOCO) * 2) {
-                    etapa3[nEtapas] = temp3[pont1];
-                    nBloco1++;
-                    nEtapas++;
-                    pont1++;
-                } else if (temp4[pont2] != null && temp3[pont1] == null && nBloco2 < (TAMANHO_BLOCO) * 2) {
-                    etapa3[nEtapas] = temp4[pont2];
-                    nBloco2++;
-                    nEtapas++;
-                    pont2++;
-                } else if (temp3[pont1] == null && temp4[pont2] == null) {
-                    nBloco1 = (TAMANHO_BLOCO) * 2;
-                    nBloco2 = (TAMANHO_BLOCO) * 2;
-                } else if (nBloco1 < (TAMANHO_BLOCO) * 2 && nBloco2 >= (TAMANHO_BLOCO) * 2) {
-                    etapa3[nEtapas] = temp3[pont1];
-                    nBloco1++;
-                    nEtapas++;
-                    pont1++;
-                } else if (nBloco2 < (TAMANHO_BLOCO) * 2 && nBloco1 >= (TAMANHO_BLOCO) * 2) {
-                    etapa3[nEtapas] = temp4[pont2];
-                    nBloco2++;
-                    nEtapas++;
-                    pont2++;
-                } else if (temp3[pont1].getId() < temp4[pont2].getId() && temp3[pont1].getId() != -1) {
-                    etapa3[nEtapas] = temp3[pont1];
-                    nBloco1++;
-                    nEtapas++;
-                    pont1++;
-                } else if (temp4[pont2].getId() < temp3[pont1].getId() && temp4[pont2].getId() != -1) {
-                    etapa3[nEtapas] = temp4[pont2];
-                    nBloco2++;
-                    nEtapas++;
-                    pont2++;
-                }
-            }
-
-            etapa3 = ordenar(etapa3);
-
-            for (int i = 0; i < etapa3.length; i++) {
-                if (switchArq2) {
-                    if (etapa3[i] != null) {
-                        byte[] ba;
-                        ba = etapa3[i].toByte();
-                        arq5.writeInt(ba.length);
-                        arq5.write(ba);
-                    }
-                } else {
-                    if (etapa3[i] != null) {
-                        byte[] ba;
-                        ba = etapa3[i].toByte();
-                        arq6.writeInt(ba.length);
-                        arq6.write(ba);
-                    }
-                }
-            }
-
-            switchArq2 = !(switchArq2);
-            nBloco1 = 0;
-            nBloco2 = 0;
-            nEtapas = 0;
-
-            for (int i = 0; i < etapa3.length; i++) {
-                etapa3[i] = null;
-            }
-        }
-
-        // Leitura dos arquivos temporarios 5 e 6
-        Filme[] temp5 = lerTemp("Data/temp/arq5.tmp");
-        Filme[] temp6 = lerTemp("Data/temp/arq6.tmp");
-        RandomAccessFile arq7 = new RandomAccessFile("Data/temp/arq7.tmp", "rw");
-
-        switchArq2 = true;
-        nBloco1 = 0;
-        nBloco2 = 0;
-        nEtapas = 0;
-        pont1 = 0;
-        pont2 = 0;
-        Filme[] etapa4 = new Filme[(TAMANHO_BLOCO) * 8];
-        // Ultima intercalaçao
-        while (temp5[pont1] != null || temp6[pont2] != null) {
-            while (nBloco1 < (TAMANHO_BLOCO) * 4 || nBloco2 < (TAMANHO_BLOCO) * 4) {
-
-                if (temp5[pont1] != null && temp6[pont2] == null && nBloco1 < (TAMANHO_BLOCO) * 4) {
-                    etapa4[nEtapas] = temp5[pont1];
-                    nBloco1++;
-                    pont1++;
-                    nEtapas++;
-                } else if (temp6[pont2] != null && temp5[pont1] == null && nBloco2 < (TAMANHO_BLOCO) * 4) {
-                    etapa4[nEtapas] = temp6[pont2];
-                    nBloco2++;
-                    pont2++;
-                    nEtapas++;
-                } else if (temp5[pont1] == null && temp6[pont2] == null) {
-                    nBloco1 = (TAMANHO_BLOCO) * 4;
-                    nBloco2 = (TAMANHO_BLOCO) * 4;
-                } else if (nBloco1 < (TAMANHO_BLOCO) * 4 && nBloco2 >= (TAMANHO_BLOCO) * 4) {
-                    etapa4[nEtapas] = temp5[pont1];
-                    nBloco1++;
-                    pont1++;
-                    nEtapas++;
-                } else if (nBloco2 < (TAMANHO_BLOCO) * 4 && nBloco1 >= (TAMANHO_BLOCO) * 4) {
-                    etapa4[nEtapas] = temp6[pont2];
-                    nBloco2++;
-                    pont2++;
-                    nEtapas++;
-                } else if (temp5[pont1].getId() < temp6[pont2].getId() && temp5[pont1].getId() != -1) {
-                    etapa4[nEtapas] = temp5[pont1];
-                    nBloco1++;
-                    pont1++;
-                    nEtapas++;
-                } else if (temp6[pont2].getId() < temp5[pont1].getId() && temp6[pont2].getId() != -1) {
-                    etapa4[nEtapas] = temp6[pont2];
-                    nBloco2++;
-                    pont2++;
-                    nEtapas++;
-                }
-            }
-            etapa4 = ordenar(etapa4);
-            for (int i = 0; i < etapa4.length; i++) {
-                if (etapa4[i] != null) {
-                    byte[] ba;
-                    ba = etapa4[i].toByte();
-
-                    arq7.writeInt(ba.length);
-                    arq7.write(ba);
-                }
-            }
-            nBloco1 = 0;
-            nBloco2 = 0;
-            nEtapas = 0;
-            for (int i = 0; i < etapa4.length; i++) {
-                etapa4[i] = null;
-            }
-        }
-
-        Filme[] temp7 = lerTemp("Data/temp/arq7.tmp"); // Leitura do arquivo temporario 7
-
-        // Printa na tela como ficou o resultado da intercaçao
-        System.out.print("[");
-        for (int i = 0; i < temp7.length; i++) {
-            if (temp7[i] != null) {
-                System.out.print(temp7[i].getId());
-                System.out.print(" ");
-            }
-        }
-        System.out.print("]");
-
-        // Fechamento de todos os arquivos temporarios
-        arq1.close();
-        arq2.close();
-        arq3.close();
-        arq4.close();
-        arq5.close();
-        arq6.close();
-        arq7.close();
-        // retorna o arquivo temporario 7, onde esta a intercaçao completa
-        return temp7;
-    }
-
     public static Filme[] lerTemp(String path) throws Exception {
         int len;
         byte[] ba;
@@ -803,23 +450,44 @@ public class TP01 {
         return temps;
     }
 
+    public static HashMap<Character, Integer> makeFrequency(String filename) {
+        var frequency = new HashMap<Character, Integer>();
+        try {
+            RandomAccessFile raf = new RandomAccessFile("data/Imdb.bin", "rw");
+            while (raf.getFilePointer() < raf.length()) {
+                char c = (char) raf.readByte();
+                frequency.merge(c, 1, Integer::sum);
+            }
+            raf.seek(0);
+            raf.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return frequency;
+    }
+
     public static void main(String[] args) throws Exception {
 
         Scanner sc = new Scanner(System.in);
         int choice = 0;
+        int lzw = 0, huffman = 0;
         int id = 0;
         Filme[] filmes = new Filme[1100];
+        String nomeCompactado = "", nomeDescompacta = "";
 
-        while (choice != 6) {
+        while (choice != 7) {
             choice = 0;
+            lzw = 0;
+            huffman = 0;
             // Exibição do menu de opçoes do programa
             System.out.println("Selecione uma operação:");
             System.out.println("1. Carregar base de dados");
             System.out.println("2. Ler um registro existente");
             System.out.println("3. Atualizar um registro existente");
             System.out.println("4. Excluir um registro existente");
-            System.out.println("5. Ordenação externa");
-            System.out.println("6. Sair");
+            System.out.println("5. LZW");
+            System.out.println("6. Huffman");
+            System.out.println("7. Sair");
 
             if (sc.hasNextLine()) {
                 choice = sc.nextInt(); // Leitura da escolha do usuario
@@ -853,15 +521,103 @@ public class TP01 {
                     excluiFilme(id);
                     break;
                 case 5:
-                    System.out.println("Qual o valor de m? ");
-                    int m = sc.nextInt(); // lendo o valor de m
-                    sc.nextLine(); // Limpar o buffer do scanner
-                    System.out.println("Qual o valor de n? ");
-                    int n = sc.nextInt(); // lendo o valor de n
-                    sc.nextLine(); // Limpar o buffer do scanner
-                    filmes = IntercalacaoBalanceada(m, n, filmes);
+                    while (lzw != 3) {
+                        lzw = 0;
+                        // Exibição do menu de opçoes do programa
+                        System.out.println("Selecione uma operação:");
+                        System.out.println("1. Compactar");
+                        System.out.println("2. Descompactar");
+                        System.out.println("3. Sair");
+                        lzw = sc.nextInt(); // Leitura da escolha do usuario
+                        sc.nextLine(); // Limpar o buffer do scanner
+                        switch (lzw) {
+                            case 0:
+                                break;
+                            case 1:
+                                nomeCompactado = "ImdbComapctaLZW";
+                                LZW.compress("data/Imdb.bin", nomeCompactado);
+
+                                System.out
+                                        .println("\n>>> Arquivo compactado com sucesso em \"" + nomeCompactado + "\"!");
+                                break;
+                            case 2:
+                                nomeDescompacta = "ImdbDescomapctaLZW";
+                                long tempoInicial = System.currentTimeMillis();
+                                LZW.decompress(nomeCompactado, nomeDescompacta);
+                                long tempoResultante = System.currentTimeMillis() - tempoInicial;
+
+                                System.out.println("Tempo resultante = " + tempoResultante);
+                                System.out.println(
+                                        "\n>>> Arquivo descompactado com sucesso em \"" + nomeDescompacta + "\"!");
+                                break;
+                            case 3:
+                                // Saindo do programa
+                                System.out.println("Saindo do programa...");
+                                break;
+                            default:
+                                System.out.println("Opção inválida. Por favor, tente novamente.");
+                                break;
+                        }
+                    }
                     break;
                 case 6:
+                    var frequency = makeFrequency("data/Imdb.bin");
+                    var tree = new Huffman(frequency);
+                    tree.traverse(Huffman.root, "");
+                    RandomAccessFile source = new RandomAccessFile("data/Imdb.bin", "rw");
+                    RandomAccessFile dest = new RandomAccessFile("h_compressed.bin", "rw");
+                    RandomAccessFile desc = new RandomAccessFile("h_descompressed.bin", "rw");
+                    while (huffman != 3) {
+                        huffman = 0;
+                        // Exibição do menu de opçoes do programa
+                        System.out.println("Selecione uma operação:");
+                        System.out.println("1. Compactar");
+                        System.out.println("2. Descompactar");
+                        System.out.println("3. Sair");
+                        huffman = sc.nextInt(); // Leitura da escolha do usuario
+                        sc.nextLine(); // Limpar o buffer do scanner
+                        switch (huffman) {
+                            case 0:
+                                break;
+                            case 1:
+                                try {
+                                    Huffman.compress(source, dest);
+
+                                    source.seek(0);
+                                    dest.seek(0);
+                                    source.close();
+                                    dest.close();
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                                System.out.println("Arquivos h_compressed.bin criado");
+                                System.out.println("Feito!");
+                                break;
+                            case 2:
+                                try {
+                                    Huffman.decompress(dest, desc);
+
+                                    source.seek(0);
+                                    dest.seek(0);
+                                    source.close();
+                                    dest.close();
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                                System.out.println("Arquivos h_descompressed.bin criado");
+                                System.out.println("Feito!");
+                                break;
+                            case 3:
+                                // Saindo do programa
+                                System.out.println("Saindo do programa...");
+                                break;
+                            default:
+                                System.out.println("Opção inválida. Por favor, tente novamente.");
+                                break;
+                        }
+                    }
+                    break;
+                case 7:
                     // Saindo do programa
                     System.out.println("Saindo do programa...");
                     break;
